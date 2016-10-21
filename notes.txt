@@ -1,0 +1,115 @@
+
+## Levels
+1. The Welcome Mat
+    - villan: Raditz
+    - onWin: kicked into kame house
+    - layers: 1
+    - protector: none
+    - defense: none
+    - note: teach basic 'own krillin' mechanic (glowy button within proximity)
+
+2. Afterimage? Does that even work at higher power levels?
+    - villian: Nappa
+    - onWin: punched in the face. (falls to first floor)
+    - layers: 2
+    - protector: piccolo(beam + punch)
+    - defense: afterimage punch (spawn another krillin behind you that punches you)
+    
+3. You must be at least this tall to speak to Vegeta...
+    - villian: Vegeta
+    - onWin: kick off screen
+    - layers: 3
+    - protector: gohan(punch) goku(beam+punch)
+    - defense: none
+    
+4. Krillin never learns...
+    - villian: Vegeta
+    - onWin: rapid punch
+    - layers: 1
+    - protector: none
+    - defense: none
+
+5. ...
+    - villian: Recoome
+    - onWin: Kick far. slide on ground
+    - layers: 3
+    - protector: gohan vegeta
+    - defense: block
+    
+6. BFF?
+    - villian: Ginyu Goku
+    - onWin: punch to the ground
+    - layers: 1
+    - protector: gohan (nothing)
+    - defense: none 
+
+7. the weakest link
+    - villian: Frieza2
+    - onWin: punch up
+    - layers: 4
+    - protector: dende gohan vegeta piccolo
+    - defense: none
+
+8. Krillin never learns... again
+    - villian: Frieza4
+    - onWin: psychic combust
+    - layers: 4
+    - protector: goku hard
+    - defense: none
+
+9. adult supervision required
+    - villian: Android20
+    - onWin: combination grab throw punch kick
+    - layers: 4
+    - protector: piccolo tien
+    - defense: none
+
+## Assets
+all the assets that i need to aqquire
+
+### 8-9 player sprites
+- raditz: 
+- nappa: http://www.spriters-resource.com/resources/sheets/18/18965.png
+- vegeta armor: http://www.spriters-resource.com/resources/sheets/18/18967.png
+- vegeta:
+- recoome: http://www.spriters-resource.com/resources/sheets/29/31467.png
+- ginyu goku: http://www.spriters-resource.com/resources/sheets/29/31512.png
+- frieza2: 
+- frieza4: http://www.spriters-resource.com/resources/sheets/29/31530.png
+- 20: http://www.spriters-resource.com/resources/sheets/29/31747.png
+
+
+### 1-2 krillin sprites
+- krillin: http://www.spriters-resource.com/resources/sheets/29/31339.png
+- krillin namekian:
+
+
+### 7-8 counter sprites
+- piccolo: http://www.spriters-resource.com/resources/sheets/18/18966.png
+- gohan: http://www.spriters-resource.com/resources/sheets/18/18964.png
+- goku: http://www.spriters-resource.com/resources/sheets/18/18963.png
+- ssj goku: http://www.spriters-resource.com/resources/sheets/29/31642.png
+- tien:
+
+
+### 5 scenes
+- kame house:
+- namek, mountians, fields, wasteland
+    - http://www.spriters-resource.com/resources/sheets/52/55371.png
+  
+
+### misc assets
+- android stop button
+- destructo disk
+- ki blast (gray for tint)
+- kame witnesses (baby gohan, roshi, bulma, goku)
+- hit sounds
+
+
+### future
+- add to homescreen module (flow from underneath the bar and instruct/explain with ios icons. android is most likely unaffected)
+- cutscenes explaining the each level
+- fun dialog
+- team fourstar owned krillin sound effect and image
+- krillin random defense (taiyoken)
+- sidekick jiece 

@@ -1,0 +1,16 @@
+{
+    "background": {
+        "spriteName" :"scene_earth_water",
+        "xOffset": -1,
+        "yOffset": -5,
+        "scale": {"x": 5, "y": 3}
+    },
+    
+    "platforms": [
+        {"x": 0, "y": 70, "spriteName": "scene_close_up"},
+        {"x": 0, "y": 145, "spriteName": "scene_close_up"},
+        {"x": 0, "y": 220, "spriteName": "scene_close_up"}
+    ],
+    
+    "avatar": "raditz"
+}
