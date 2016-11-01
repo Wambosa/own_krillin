@@ -12,5 +12,15 @@
         {"x": 0, "y": 220, "spriteName": "scene_close_up"}
     ],
     
-    "avatar": "raditz"
+    "enemies": [
+        {
+            "name": "tien",
+            "layer": 0,
+            "difficulty": "easy"
+        }
+    ],
+    
+    "krillinMoves": ["run", "block", "attack", "taiyoken", "kiBlast", "destructoDisk"],
+    
+    "villian": "vegeta"
 }

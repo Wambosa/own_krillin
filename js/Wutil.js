@@ -1,14 +1,20 @@
 const DIRECTION = {
-    DOWN: 'Down',
-    UP: 'Up',
-    LEFT: 'Left',
-    RIGHT: 'Right'
+    DOWN: 'down',
+    UP: 'up',
+    LEFT: 'left',
+    RIGHT: 'right'
 };
+
+const verticalDiffThreshold = 0.1;
 
 window.W = {
     
     randomInt: function(min, max) {
         return Math.floor(Math.random()*(max-min+1)+min);
+    },
+    roundDecimal: function(decimal, hops){
+	    var n = hops || 2;
+	    return +(decimal.toFixed(n));
     },
     distance: function(a, b) {
         return Phaser.Math.distance(
@@ -26,22 +32,14 @@ window.W = {
             b.sprite.position.y
         );
     },
-    getFacingDirection: function(obj){
-        var dir = DIRECTION.DOWN;
+    lookTarget: function(iTargetable) {
+        // curry: findTarget.call(self, theTarget)
+        if(!iTargetable.position)
+            console.warn('cannot find target on an abject that does not have the "position" property!');
+            
+        var dir = DIRECTION.RIGHT;
         
-        if(obj.sprite){
-            
-            var horizontalDiff = Math.abs(obj.sprite.position.x - obj.sprite.previousPosition.x);
-            var verticalDiff = Math.abs(obj.sprite.position.y - obj.sprite.previousPosition.y);
-            
-            if(horizontalDiff > verticalDiff + 0.1)
-                dir = obj.sprite.position.x > obj.sprite.previousPosition.x ? DIRECTION.RIGHT : DIRECTION.LEFT;
-            else
-                dir = obj.sprite.position.y > obj.sprite.previousPosition.y ? DIRECTION.DOWN : DIRECTION.UP;
-            
-        }else{
-            console.warn(obj.name, "getFacingDirection failed because 'sprite' property is missing");
-        }
+        dir = this.position.x < iTargetable.position.x ? DIRECTION.RIGHT : DIRECTION.LEFT;
         
         return dir;
     },
