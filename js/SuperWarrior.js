@@ -36,10 +36,14 @@ function SuperWarrior(options) {
     );
     this.sprite.anchor.setTo(.5, 1);
     
+    // TODO: allow manipulation in options
     this.sprite.animations.add('stand', this.animFrames.stand, 1);
     this.sprite.animations.add('dash', this.animFrames.dash, 1);
     this.sprite.animations.add('fall', this.animFrames.fall, 1);
     this.sprite.animations.add('kick', this.animFrames.kick, 9, true);
+    this.sprite.animations.add('pain', this.animFrames.pain, 9, true); //meah
+    this.sprite.animations.add('knockback', this.animFrames.knockback, 1);
+    
     this.sprite.play('stand');
     
     if(options.direction)
@@ -60,6 +64,7 @@ function SuperWarrior(options) {
     // hack
     this.body = this.sprite.body;
     this.isFinisherMode = false;
+    this.finisherStep = 0;
     
     return this;
 }
@@ -68,7 +73,8 @@ function SuperWarrior(options) {
 SuperWarrior.prototype = {
     
     update: function() {
-        this.animate();
+        if(this.can('animate'))
+            this.animate();
         
         // todo: move out of update and into slower timed cycle with larger regen rate
         // future: ki% determines finisher type used on krillin
@@ -76,7 +82,7 @@ SuperWarrior.prototype = {
             this.stats.ki += this.stats.kiRegen;
         
         //execute ai cycle. may need to take out of main update loop? seperate animation speed from ai loop speed
-        if(this.ai)
+        if(this.ai && this.can('ai'))
             this.ai();
     },
     
@@ -98,6 +104,14 @@ SuperWarrior.prototype = {
         return this.facing;
     },
     
+    face: function(iTargetable) {
+
+        if(iTargetable.sprite)
+            iTargetable = iTargetable.sprite;
+
+        this.sprite.scale.x = this.sprite.position.x < iTargetable.position.x ? 1 : -1;
+    },
+    
     buildAnimationFrames: function(animations) {
         // todo: support variant frame counts per action.
         // example: some characters kick is 3 frames instead of 2
@@ -106,7 +120,10 @@ SuperWarrior.prototype = {
           dash: ['lsw_'+this.name+'_dash'],
           fall: ['lsw_'+this.name+'_fall'],
           kick: ['lsw_'+this.name+'_kick', 'lsw_'+this.name+'_kick2'],
-          afterImage: ['lsw_'+this.name+'_blur', 'lsw_dodge', 'lsw_dodge2', 'lsw_dodge', 'lsw_dodge']
+          knockback: ['lsw_'+this.name+'_knockback'],
+          afterImage: ['lsw_'+this.name+'_blur', 'lsw_dodge', 'lsw_dodge2', 'lsw_dodge', 'lsw_dodge'],
+          pain: ['lsw_'+this.name+'_pain', 'lsw_'+this.name+'_pain2', 'lsw_'+this.name+'_pain3',],
+          
         };
     },
     
@@ -119,7 +136,7 @@ SuperWarrior.prototype = {
         else if(this.sprite.body.touching.down)
             this.sprite.play('stand');
             
-        if(this.target && this.performing('stand')) {
+        if(this.ai && this.target && this.performing('stand')) {
             var dir = W.lookTarget.call(this.sprite, this.target);
             this.sprite.scale.x = dir == 'right' ? 1 : -1;
         }
@@ -136,12 +153,22 @@ SuperWarrior.prototype = {
         var self = this;
         
         var todo = {
+            ai: function(){
+                return true;
+            },
+            animate: function(){
+                return true;
+            },
             move: function(){
                 // todo: think about what will imobilize the player later
                 return true;
             },
             dodge: function() {
                 return self.body.touching.down && self.stats.ki >= 100;
+            },
+            attack: function(){
+                // todo: need to think about the nearest target. then must be within a certain range. minimum ki?
+                return true;
             }
         };
         

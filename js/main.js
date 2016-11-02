@@ -10,7 +10,7 @@ var GameState = {
     this.scale.pageAlignVertically = true;
     
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    this.game.physics.arcade.gravity.y = 750;
+    this.game.physics.arcade.gravity.y = EARTHGRAVITY;
     this.game.world.setBounds(0, 0, 568, 320);
     
     this.dualInput = new DualInput(this.game);
@@ -25,6 +25,7 @@ var GameState = {
     this.game.load.image('dragonball_1', 'assets/img/dragonball_1.png');
     this.game.load.image('dragonball_2', 'assets/img/dragonball_2.png');
     this.game.load.image('dragonball_own', 'assets/img/dragonball_own.png');
+    this.game.load.image('owned_count', 'assets/img/ownedcount.jpg');
     this.game.load.image('vs', 'assets/img/vs.png');
     this.game.load.image('bar', 'assets/img/bar.png');
 
@@ -67,18 +68,6 @@ var GameState = {
     
     this.dualInput.button({
       key: 'down',
-      spriteName: 'dragonball_2',
-      x: 482,
-      y: 320,
-      scale: .6,
-      disabled: true, //gray button out and ignores dualInput.if
-      condition: function() {
-        return !self.dualInput.touch.own.visible;
-      }
-    });
-    
-    this.dualInput.button({
-      key: 'own',
       spriteName: 'dragonball_own',
       x: 482,
       y: 320,
@@ -118,12 +107,12 @@ var GameState = {
     this.healthR = this.game.add.sprite(278, 253, 'bar');
     this.healthR.anchor.setTo(0, .5);
     this.healthR.scale.setTo(-2, .45);
-    this.healthR.tint = 0x00ff00;
+    this.healthR.tint = COLOR.GREEN;
     
     this.healthK = this.game.add.sprite(289, 253, 'bar');
     this.healthK.anchor.setTo(0, .5);
     this.healthK.scale.setTo(2, .45);
-    this.healthK.tint = 0x00ff00;
+    this.healthK.tint = COLOR.GREEN;
     
     this.vs = this.game.add.sprite(285, 240, 'vs');
     this.vs.anchor.setTo(.5, 0);
@@ -189,14 +178,14 @@ var GameState = {
           // move away from the villian, at least n distance. 
           // when the villian closes on the resting location for the layer, then afterImage up to the next layer and run away
           
-          if(W.distance(this.target, this.sprite) < 175 
-            && this.between(50, 550)
+          if(W.distance(this.target, this.sprite) < AIBASE.FLEEDISTANCE
+            && this.between(XBOUND.LEFT, XBOUND.RIGHT)
             && this.can('move'))
             this.stats.moveSpeed = this.sprite.position.x > this.target.position.x ? this.stats.speed : -this.stats.speed;
           
           if(this.progress === self.villian.progress
-            && !this.between(50, 550)
-            && W.distance(this.target, this.sprite) < 45
+            && !this.between(XBOUND.LEFT, XBOUND.RIGHT)
+            && W.distance(this.target, this.sprite) < AIBASE.TOOCLOSE
             && this.can('dodge')) {
             
             var direction = !(this.progress % 2) ? -1 : 1;
@@ -211,8 +200,8 @@ var GameState = {
     });
     
     // note: the 'own' condition need the villian and krillin to be declared, so that it cannot be set until now
-    this.dualInput.touch.own.condition = function() {
-      return self.krillin.progress == self.villian.progress && W.distance(self.villian.sprite, self.krillin.sprite) < 40;
+    this.dualInput.touch.down.condition = function() {
+      return self.krillin.progress == self.villian.progress && W.distance(self.villian.sprite, self.krillin.sprite) < FINISHERRANGE;
     };
     
     // update manager keeps the updates ordered and clean. currently the super warrior takes care of its own animation.. might change that.
@@ -247,14 +236,65 @@ var GameState = {
         
         self.villian.body.velocity.x = self.villian.stats.moveSpeed;
         
-        // bug: then we are above krillin! crush him! (hidden finisher feature)
-        if(self.dualInput.if('down') 
-          && self.villian.sprite.y+5 < self.krillin.sprite.y
-          && Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < 15){
-            //this will activate a special drop down finisher
-            console.log("Crush Krillin!!!");
+        if(self.dualInput.if('down')){
+          
+          if(self.villian.can('attack')){
+            
+            if(Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < FINISHERRANGE && self.villian.progress === self.krillin.progress) {
+              // for now manually code this till i create a 'dragon homing' module
+              console.log('Own Krillin!');
+              self.villian.isFinisherMode = true;
+              self.krillin.isFinisherMode = true;
+              
+              self.villian.face(self.krillin);
+              self.krillin.face(self.villian);
+              
+              self.villian.sprite.play('kick');
+              self.krillin.sprite.play('pain');
+              
+              self.villian.body.allowGravity = false;
+              self.krillin.body.allowGravity = false;
+              
+              self.villian.body.velocity.setTo(0);
+              self.krillin.body.velocity.setTo(0);
+            }
+          
+            // bug: then we are above krillin! crush him! (hidden finisher feature)
+            if(self.villian.sprite.y+5 < self.krillin.sprite.y && Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < 15){console.log("Crush Krillin!!!");}
+          }
+          
+          if(self.villian.isFinisherMode)
+            self.krillin.stats.hp-= (self.villian.stats.power*.05);
         }
         
+        
+        if(!self.villian.finisherStep && self.krillin.stats.hp < 0) {
+          self.villian.finisherStep = 1;
+          self.villian.sprite.play('knockback');
+          
+          self.krillin.sprite.body.collideWorldBounds = false;
+          self.krillin.sprite.animations.currentAnim.stop();
+          self.krillin.sprite.frameName = 'lsw_krillin_pain2';
+          self.krillin.body.velocity.x = 500 * (self.krillin.sprite.position.x > self.villian.sprite.position.x ? 1 : -1);
+          self.krillin.body.velocity.y = -10;
+          // todo: add watcher on n seconds for krillin out of screen bounds and trigger the krillin owned count animation
+          
+          // todo: delete on condition?
+          self.updateMan.add({
+            name: "checkIfKrillinIsGone",
+            update: function(){
+              if(!self.krillin.between(0, 575)){
+                if(self.villian.finisherStep === 1){
+                  console.log("level complete!");
+                  self.villian.finisherStep = 2;
+                  self.krillin.body.velocity.setTo(0);
+                  self.game.add.sprite(0, 0, 'owned_count').scale.setTo(.37);
+                  
+                }
+              }
+            }
+          }, Phaser.Timer.SECOND * 1);
+        }
       }
     });
     
