@@ -1,7 +1,7 @@
 // this class should represent generic keyboard & touch inputs
 // it should be a single interface for both interactions
 
-function DualInput(context){
+function DualInput(context) {
   var self = this;
   
   this.cursors = context.input.keyboard.createCursorKeys();
@@ -58,9 +58,17 @@ function DualInput(context){
       function defaultbuttonDown(){b.isDown = true;}
       function defaultbuttonRelease(){b.isDown = false;}
       
-      b.events.onInputDown.add(options.onDown || defaultbuttonDown);
-      b.events.onInputOut.add(options.onUp || defaultbuttonRelease);
-      b.events.onInputUp.add(options.onUp || defaultbuttonRelease);
+      b.events.onInputDown.add(defaultbuttonDown);
+      b.events.onInputOut.add(defaultbuttonRelease);
+      b.events.onInputUp.add(defaultbuttonRelease);
+      
+      if(options.onDown)
+        b.events.onInputDown.add(options.onDown);
+        
+      if(options.onUp) {
+        b.events.onInputOut.add(options.onUp);
+        b.events.onInputUp.add(options.onUp);
+      }
       
       b.condition = options.condition || function(){return true;}
       

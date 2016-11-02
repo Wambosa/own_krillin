@@ -13,7 +13,7 @@ window.W = {
         return Math.floor(Math.random()*(max-min+1)+min);
     },
     roundDecimal: function(decimal, hops){
-	    var n = hops || 2;
+	    var n = hops === 0 ? 0 : hops || 2;
 	    return +(decimal.toFixed(n));
     },
     distance: function(a, b) {

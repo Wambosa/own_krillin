@@ -7,9 +7,10 @@
     },
     
     "platforms": [
-        {"x": 0, "y": 70, "spriteName": "scene_close_up"},
-        {"x": 0, "y": 145, "spriteName": "scene_close_up"},
-        {"x": 0, "y": 220, "spriteName": "scene_close_up"}
+        {"x": 0, "y": 220},
+        {"x": 0, "y": 145},
+        {"x": 0, "y": 88},
+        {"x": 0, "y": 89}
     ],
     
     "enemies": [

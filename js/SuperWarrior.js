@@ -1,4 +1,4 @@
-function SuperWarrior(options){
+function SuperWarrior(options) {
     if(this == window)
         throw "you fool! use 'new' keyword"
         
@@ -20,7 +20,10 @@ function SuperWarrior(options){
         speed: options.speed || 100,
         power: options.power || 50,
         hp: options.hp || 100,
-        ki: options.ki || 25
+        ki: options.ki || 25,
+        
+        moveSpeed: 0,
+        kiRegen: this.baseFormStats.ki * .005, //temp
     };
     
     // visual
@@ -49,13 +52,14 @@ function SuperWarrior(options){
         this.sprite.body.collideWorldBounds = true;
     
     // AI
-    this.isControlled = options.isControlled;
+    this.ai = options.ai;
     this.progress = 0;
     this.facing = options.direction || 'right';
     this.target = options.target;
     
     // hack
     this.body = this.sprite.body;
+    this.isFinisherMode = false;
     
     return this;
 }
@@ -66,18 +70,23 @@ SuperWarrior.prototype = {
     update: function() {
         this.animate();
         
-        // hacks for AI. move out of here and into updateable later
-        if(this.target && this.performing('stand')) {
-            var dir = W.lookTarget.call(this.sprite, this.target);
-            this.sprite.scale.x = dir == 'right' ? 1 : -1;
-        }
+        // todo: move out of update and into slower timed cycle with larger regen rate
+        // future: ki% determines finisher type used on krillin
+        if(this.stats.ki < this.baseFormStats.ki)
+            this.stats.ki += this.stats.kiRegen;
         
-        if(this.performing('dash'))
-            this.sprite.scale.x = this.direction() == 'right' ? 1 : -1;
+        //execute ai cycle. may need to take out of main update loop? seperate animation speed from ai loop speed
+        if(this.ai)
+            this.ai();
     },
     
-    percentOf: function(statName) {
-        return W.roundDecimal(100 * (this.stats[statName] / this.baseFormStats[statName]));
+    percentOf: function(statName, isPrecise) {
+        return W.roundDecimal(100 * (this.stats[statName] / this.baseFormStats[statName]), isPrecise && 2 || 0);
+    },
+    
+    between: function(min, max) {
+        var x = this.sprite.position.x;
+        return x <= max && x >= min;
     },
     
     direction: function() {
@@ -89,7 +98,7 @@ SuperWarrior.prototype = {
         return this.facing;
     },
     
-    buildAnimationFrames: function(animations){
+    buildAnimationFrames: function(animations) {
         // todo: support variant frame counts per action.
         // example: some characters kick is 3 frames instead of 2
         return {
@@ -102,16 +111,41 @@ SuperWarrior.prototype = {
     },
     
     animate: function() {
+        
         if(W.isMovingVertical(this, 3))
             this.sprite.play('fall');
         else if(this.sprite.body.velocity.x != 0)
             this.sprite.play('dash');
         else if(this.sprite.body.touching.down)
             this.sprite.play('stand');
+            
+        if(this.target && this.performing('stand')) {
+            var dir = W.lookTarget.call(this.sprite, this.target);
+            this.sprite.scale.x = dir == 'right' ? 1 : -1;
+        }
+        
+        if(this.performing('dash'))
+            this.sprite.scale.x = this.direction() == 'right' ? 1 : -1;  
     },
     
     performing: function(animationName) {
         return animationName == this.sprite.animations.currentAnim.name;
+    },
+    
+    can: function(actionName) {
+        var self = this;
+        
+        var todo = {
+            move: function(){
+                // todo: think about what will imobilize the player later
+                return true;
+            },
+            dodge: function() {
+                return self.body.touching.down && self.stats.ki >= 100;
+            }
+        };
+        
+        return (!self.isFinisherMode && todo[actionName]) && todo[actionName]();
     },
     
     dodge: function(options) {
@@ -132,6 +166,7 @@ SuperWarrior.prototype = {
       afterImage.play('a', false, false, true);
       
       this.sprite.position.add(x, y);
+      // future: fixed cost for snap, yet more powerful villians can hover by holding up which quickly drains ki
+      this.stats.ki -= 100;
     }
-    
 };

@@ -16,45 +16,14 @@ var GameState = {
     this.dualInput = new DualInput(this.game);
     this.updateMan = new UpdateManager({context: this.game});
   },
-  createOnSCreenControls: function(){
-    
-    this.dualInput.button({
-      key: 'left',
-      spriteName: 'dragonball_arrow',
-      x: 85,
-      y: 320,
-      scale: .6,
-      flipX: true
-    });
-    this.dualInput.button({
-      key: 'right',
-      spriteName: 'dragonball_arrow',
-      x: 85,
-      y: 320,
-      scale: .6
-    });
-    this.dualInput.button({
-      key: 'up',
-      spriteName: 'dragonball_dodge',
-      x: 398,
-      y: 320,
-      scale: .6
-    });
-    
-    this.dualInput.button({
-      key: 'own',
-      spriteName: 'dragonball_own',
-      x: 398,
-      y: 320,
-      scale: .6
-    });
-  },
 
   preload: function() {
     this.game.load.text('scene1', 'assets/data/scene1.json');
     this.game.load.atlasJSONHash('dbz', 'assets/img/dbz.png', 'assets/data/dbz.json');
+    this.game.load.image('platform', 'assets/img/platform.png');
     this.game.load.image('dragonball_arrow', 'assets/img/dragonball_arrow.png');
-    this.game.load.image('dragonball_dodge', 'assets/img/dragonball_dodge.png');
+    this.game.load.image('dragonball_1', 'assets/img/dragonball_1.png');
+    this.game.load.image('dragonball_2', 'assets/img/dragonball_2.png');
     this.game.load.image('dragonball_own', 'assets/img/dragonball_own.png');
     this.game.load.image('vs', 'assets/img/vs.png');
     this.game.load.image('bar', 'assets/img/bar.png');
@@ -66,6 +35,55 @@ var GameState = {
     this.game.load.image('icon_lightVest', 'assets/img/icon_lightVest.png');
     this.game.load.image('icon_scouter', 'assets/img/icon_scouter.png');
     this.game.load.image('icon_tail', 'assets/img/icon_tail.png');
+  },
+
+  createOnSCreenControls: function() {
+    var self = this;
+    
+    this.dualInput.button({
+      key: 'left',
+      spriteName: 'dragonball_arrow',
+      x: 85,
+      y: 320,
+      scale: .6,
+      flipX: true
+    });
+    
+    this.dualInput.button({
+      key: 'right',
+      spriteName: 'dragonball_arrow',
+      x: 86,
+      y: 320,
+      scale: .6
+    });
+    
+    this.dualInput.button({
+      key: 'up',
+      spriteName: 'dragonball_1',
+      x: 398,
+      y: 320,
+      scale: .6
+    });
+    
+    this.dualInput.button({
+      key: 'down',
+      spriteName: 'dragonball_2',
+      x: 482,
+      y: 320,
+      scale: .6,
+      disabled: true, //gray button out and ignores dualInput.if
+      condition: function() {
+        return !self.dualInput.touch.own.visible;
+      }
+    });
+    
+    this.dualInput.button({
+      key: 'own',
+      spriteName: 'dragonball_own',
+      x: 482,
+      y: 320,
+      scale: .6
+    });
   },
 
   create: function() {
@@ -81,24 +99,21 @@ var GameState = {
     );
     this.background.scale.setTo(this.sceneData.background.scale.x, this.sceneData.background.scale.y);
     
-
+    
+    // hack: strange bug with platform collisions so i doubled up on the y 88 89
     this.platforms = this.add.group();
     this.platforms.enableBody = true;
     this.sceneData.platforms.forEach(function(p){
-      self.platforms.create(p.x, p.y, 'dbz', p.spriteName);
+      self.platforms.create(p.x, p.y, 'platform');
     });
     this.platforms.setAll('body.immovable', true);
     this.platforms.setAll('body.allowGravity', false);
-    this.platforms.setAll('scale.x', 10);
-    this.platforms.setAll('scale.y', .1);
+    this.platforms.setAll('scale.y', 2);
     this.platforms.setAll('alpha', 0);
 
     this.createOnSCreenControls();
 
-    // todo: alter the sprite to have tranceparency
-    this.vs = this.game.add.sprite(284, 240, 'vs');
-    this.vs.anchor.setTo(.5, 0);
-    this.vs.scale.setTo(.4);
+    // TODO: PICK UP HERE. make UI Man 
 
     this.healthR = this.game.add.sprite(278, 253, 'bar');
     this.healthR.anchor.setTo(0, .5);
@@ -109,6 +124,10 @@ var GameState = {
     this.healthK.anchor.setTo(0, .5);
     this.healthK.scale.setTo(2, .45);
     this.healthK.tint = 0x00ff00;
+    
+    this.vs = this.game.add.sprite(285, 240, 'vs');
+    this.vs.anchor.setTo(.5, 0);
+    this.vs.scale.setTo(.4);
     
     this.chibiR = this.game.add.sprite(244, 265, 'dbz', 'chibi_raditz');
     this.chibiK = this.game.add.sprite(324, 265, 'dbz', 'chibi_krillin');
@@ -144,7 +163,7 @@ var GameState = {
       name: "raditz" || this.sceneData.villian,
       hp: 5000,
       power: 1000,
-      speed: 150,
+      speed: 175,
       ki: 500,
       x: 90,
       y: 215
@@ -160,100 +179,108 @@ var GameState = {
       x: 225, //325
       y: 215,
       direction: 'left',
-      target: this.villian.sprite
+      target: this.villian.sprite, // note: may need to eventually include the SuperWarrior instead of just sprite
+      ai: function() {
+        
+        this.stats.moveSpeed = 0;
+        
+        if(self.sceneData.krillinMoves.indexOf('run') > -1) {
+          
+          // move away from the villian, at least n distance. 
+          // when the villian closes on the resting location for the layer, then afterImage up to the next layer and run away
+          
+          if(W.distance(this.target, this.sprite) < 175 
+            && this.between(50, 550)
+            && this.can('move'))
+            this.stats.moveSpeed = this.sprite.position.x > this.target.position.x ? this.stats.speed : -this.stats.speed;
+          
+          if(this.progress === self.villian.progress
+            && !this.between(50, 550)
+            && W.distance(this.target, this.sprite) < 45
+            && this.can('dodge')) {
+            
+            var direction = !(this.progress % 2) ? -1 : 1;
+            if(++this.progress >= 2 && self.villian.progress >= 2)
+              self.villian.progress = this.progress;
+            this.dodge({x: 60*direction, y: -100});
+          }
+        }
+        
+        this.body.velocity.x = this.stats.moveSpeed;
+      }
     });
     
-    this.dualInput.touch.up.condition = function() {
-      return !self.dualInput.touch.own.visible;
-    };
+    // note: the 'own' condition need the villian and krillin to be declared, so that it cannot be set until now
     this.dualInput.touch.own.condition = function() {
-      return self.krillin.progress == self.villian.progress && W.distance(self.villian.sprite, self.krillin.sprite) < 35;
+      return self.krillin.progress == self.villian.progress && W.distance(self.villian.sprite, self.krillin.sprite) < 40;
     };
     
+    // update manager keeps the updates ordered and clean. currently the super warrior takes care of its own animation.. might change that.
     this.updateMan.add(this.villian);
     this.updateMan.add(this.krillin);
     this.updateMan.add(this.dualInput);
+    this.updateMan.add({
+      name: 'playerController',
+      update: function() {
+        
+        self.villian.stats.moveSpeed = 0;
+        
+        if(self.dualInput.if('up') && self.villian.can('dodge')) {
+          
+          // if krillin is ahead of you, then use your superior powers to catch up!
+          if(self.villian.progress < self.krillin.progress) {
+            var direction = !(self.villian.progress % 2) ? -1 : 1;
+            self.villian.progress++;
+            self.villian.dodge({x: 15*direction, y: -100});
+          }else{
+            self.villian.dodge({y: -50});
+          }
+          
+        }else if(self.villian.can('move')){
+          
+          if(self.dualInput.if('left'))
+            self.villian.stats.moveSpeed -= self.villian.stats.speed;
+          
+          if(self.dualInput.if('right'))
+            self.villian.stats.moveSpeed += self.villian.stats.speed;
+        }
+        
+        self.villian.body.velocity.x = self.villian.stats.moveSpeed;
+        
+        // bug: then we are above krillin! crush him! (hidden finisher feature)
+        if(self.dualInput.if('down') 
+          && self.villian.sprite.y+5 < self.krillin.sprite.y
+          && Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < 15){
+            //this will activate a special drop down finisher
+            console.log("Crush Krillin!!!");
+        }
+        
+      }
+    });
     
-    // meh
-    this.game.camera.follow(this.villian.sprite);
+    // debug: Frames per second counter
     this.game.time.advancedTiming = true;
   },
   render: function(){
     this.game.debug.text(game.time.fps, 280, 310, '#ffffff');
   },
   
-  update: function(){
+  update: function() {
   
-    // WARN: collisions should be checked FIRST in an update loop. If not, it can override gravity
+    // WARN: collisions should be checked FIRST in an update loop. If not, it can override gravity and cause other catastrophe
     // arcade.overlap is a trigger collision without energy transfer
-    this.game.physics.arcade.collide(this.platforms, this.villian.sprite, function(p, chara){
-
-    });
-    this.game.physics.arcade.collide(this.platforms, this.krillin.sprite, function(p, chara){
-
-    });
-    this.game.physics.arcade.collide(this.villian.sprite, this.krillin.sprite, function(villian, krillin){
-      //stop him from rolling off the screen
-      krillin.body.velocity.setTo(0);
-    });
+    this.game.physics.arcade.collide(this.villian.sprite, this.platforms, null, null, null);
     
+    this.game.physics.arcade.collide(this.platforms, this.krillin.sprite);
     
+    this.game.physics.arcade.collide(this.villian.sprite, this.krillin.sprite);
     
     this.updateMan.update();
     
-      
-    //movement + controls
-    var villianSpeed = 0;
-    
-    if(this.dualInput.if('up') && this.villian.body.touching.down){
-      
-      this.villian.dodge({y: -50});
-      
-    }else{
-      
-      if(this.dualInput.if('left')){
-        //this.villian.sprite.scale.x = -1;
-        villianSpeed -= this.villian.stats.speed;
-      }
-      
-      if(this.dualInput.if('right')){
-        //this.villian.sprite.scale.x = 1;
-        villianSpeed += this.villian.stats.speed;
-      }
-    }
-
-    this.villian.body.velocity.x = villianSpeed;
-
-
-    //krillin AI
-    
-    var krillinSpeed = 0;
-    
-    if(this.sceneData.krillinMoves.indexOf('run') > -1){
-      
-      // move away from the villian, at least n distance. 
-      // when the villian closes on the resting location for the layer, then afterImage up to the next layer and run away
-      
-      // isBetween method
-      if(W.spriteDistance(this.villian, this.krillin) < 175 && (this.krillin.sprite.position.x < 550 && this.krillin.sprite.position.x > 50)){
-        
-        krillinSpeed = this.krillin.sprite.position.x > this.villian.sprite.position.x ? 145 : -145;
-        
-      }
-      
-      if(this.krillin.sprite.position.x >= 550 && !this.krillin.progress && W.spriteDistance(this.villian, this.krillin) < 45){
-        
-        this.krillin.progress = 1;
-        this.krillin.dodge({x: -60, y: -100});
-      }
-      
-      if(this.krillin.progress === 1){
-        
-      }
-      
-    }
-    
-    this.krillin.body.velocity.x = krillinSpeed;
+    // todo: change to slow update
+    // todo: color yellow %50 and red %25
+    this.textR.setText('%'+this.villian.percentOf('ki'));
+    this.textK.setText('%'+this.krillin.percentOf('ki'));
   }
 };
 
