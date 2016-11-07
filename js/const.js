@@ -1,7 +1,7 @@
 const EARTHGRAVITY = 750;
 const SPACEGRAVITY = 250;
 
-const FINISHERRANGE = 30;
+const FINISHERRANGE = 30; // todo: rename to MELEE RANGE
 
 const COLOR = {
     GREEN: 0x00ff00,
@@ -16,5 +16,12 @@ const XBOUND = {
 
 const AIBASE = {
     FLEEDISTANCE: 175,
+    BLOCKDISTANCE: 30,
     TOOCLOSE: 45
 };
+
+const COOLDOWN = {
+    BLOCK: 750,
+    ENDURE: 1500,
+    ATTACK: 500
+}

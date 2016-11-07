@@ -27,6 +27,12 @@ function SuperWarrior(options) {
     };
     
     // visual
+    this.cooldown = {
+        endure: 0,
+        block: 0,
+        attack: 0,
+    };
+    
     this.animFrames = this.buildAnimationFrames(options.animations);
     this.sprite = this.context.add.sprite(
         options.x || 45,
@@ -41,7 +47,8 @@ function SuperWarrior(options) {
     this.sprite.animations.add('dash', this.animFrames.dash, 1);
     this.sprite.animations.add('fall', this.animFrames.fall, 1);
     this.sprite.animations.add('kick', this.animFrames.kick, 9, true);
-    this.sprite.animations.add('pain', this.animFrames.pain, 9, true); //meah
+    this.sprite.animations.add('endure', this.animFrames.endure, 1);
+    this.sprite.animations.add('pain', this.animFrames.pain, 9, true);
     this.sprite.animations.add('knockback', this.animFrames.knockback, 1);
     
     this.sprite.play('stand');
@@ -73,6 +80,9 @@ function SuperWarrior(options) {
 SuperWarrior.prototype = {
     
     update: function() {
+        
+        //todo: lower any cooldowns that are > 0; this.cooldown.endure -= this.context.time.elapsed;
+        
         if(this.can('animate'))
             this.animate();
         
@@ -116,14 +126,14 @@ SuperWarrior.prototype = {
         // todo: support variant frame counts per action.
         // example: some characters kick is 3 frames instead of 2
         return {
-          stand: ['lsw_'+this.name+'_stand'],
-          dash: ['lsw_'+this.name+'_dash'],
-          fall: ['lsw_'+this.name+'_fall'],
-          kick: ['lsw_'+this.name+'_kick', 'lsw_'+this.name+'_kick2'],
-          knockback: ['lsw_'+this.name+'_knockback'],
-          afterImage: ['lsw_'+this.name+'_blur', 'lsw_dodge', 'lsw_dodge2', 'lsw_dodge', 'lsw_dodge'],
-          pain: ['lsw_'+this.name+'_pain', 'lsw_'+this.name+'_pain2', 'lsw_'+this.name+'_pain3',],
-          
+            stand: ['lsw_'+this.name+'_stand'],
+            dash: ['lsw_'+this.name+'_dash'],
+            fall: ['lsw_'+this.name+'_fall'],
+            endure: ['lsw_'+this.name+'_endure'],           
+            knockback: ['lsw_'+this.name+'_knockback'],
+            kick: ['lsw_'+this.name+'_kick', 'lsw_'+this.name+'_kick2'],
+            pain: ['lsw_'+this.name+'_pain', 'lsw_'+this.name+'_pain2', 'lsw_'+this.name+'_pain3',],
+            afterImage: ['lsw_'+this.name+'_blur', 'lsw_dodge', 'lsw_dodge2', 'lsw_dodge', 'lsw_dodge']
         };
     },
     
@@ -137,12 +147,11 @@ SuperWarrior.prototype = {
             this.sprite.play('stand');
             
         if(this.ai && this.target && this.performing('stand')) {
-            var dir = W.lookTarget.call(this.sprite, this.target);
-            this.sprite.scale.x = dir == 'right' ? 1 : -1;
+            this.face(this.target);
         }
         
         if(this.performing('dash'))
-            this.sprite.scale.x = this.direction() == 'right' ? 1 : -1;  
+            this.sprite.scale.x = this.direction() == 'right' ? 1 : -1;
     },
     
     performing: function(animationName) {
@@ -153,7 +162,7 @@ SuperWarrior.prototype = {
         var self = this;
         
         var todo = {
-            ai: function(){
+            ai: function() {
                 return true;
             },
             animate: function(){
@@ -166,9 +175,16 @@ SuperWarrior.prototype = {
             dodge: function() {
                 return self.body.touching.down && self.stats.ki >= 100;
             },
+            endure: function(){
+                return self.stats.ki >= 0; 
+            },
             attack: function(){
-                // todo: need to think about the nearest target. then must be within a certain range. minimum ki?
-                return true;
+                return Math.abs(self.sprite.x - self.target.sprite.x) < FINISHERRANGE 
+                    && self.progress === self.target.progress;
+            },
+            diveBomb: function() {
+                return self.sprite.y+5 < self.target.sprite.y 
+                    && Math.abs(self.sprite.x - self.target.sprite.x) < FINISHERRANGE;
             }
         };
         

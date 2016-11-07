@@ -8,7 +8,6 @@ const DIRECTION = {
 const verticalDiffThreshold = 0.1;
 
 window.W = {
-    
     randomInt: function(min, max) {
         return Math.floor(Math.random()*(max-min+1)+min);
     },

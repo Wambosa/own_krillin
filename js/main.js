@@ -61,7 +61,7 @@ var GameState = {
     this.dualInput.button({
       key: 'up',
       spriteName: 'dragonball_1',
-      x: 398,
+      x: 440,
       y: 320,
       scale: .6
     });
@@ -69,7 +69,7 @@ var GameState = {
     this.dualInput.button({
       key: 'down',
       spriteName: 'dragonball_own',
-      x: 482,
+      x: 440,
       y: 320,
       scale: .6
     });
@@ -92,7 +92,12 @@ var GameState = {
     // hack: strange bug with platform collisions so i doubled up on the y 88 89
     this.platforms = this.add.group();
     this.platforms.enableBody = true;
-    this.sceneData.platforms.forEach(function(p){
+    [
+        {"x": 0, "y": 220},
+        {"x": 0, "y": 145},
+        {"x": 0, "y": 88},
+        {"x": 0, "y": 89}
+    ].forEach(function(p){
       self.platforms.create(p.x, p.y, 'platform');
     });
     this.platforms.setAll('body.immovable', true);
@@ -149,7 +154,7 @@ var GameState = {
     
     this.villian = new SuperWarrior({
       context: this.game,
-      name: "raditz" || this.sceneData.villian,
+      name: this.sceneData.villian,
       hp: 5000,
       power: 1000,
       speed: 175,
@@ -168,7 +173,7 @@ var GameState = {
       x: 225, //325
       y: 215,
       direction: 'left',
-      target: this.villian.sprite, // note: may need to eventually include the SuperWarrior instead of just sprite
+      target: this.villian, // ISuperWarrior?
       ai: function() {
         
         this.stats.moveSpeed = 0;
@@ -178,19 +183,19 @@ var GameState = {
           // move away from the villian, at least n distance. 
           // when the villian closes on the resting location for the layer, then afterImage up to the next layer and run away
           
-          if(W.distance(this.target, this.sprite) < AIBASE.FLEEDISTANCE
+          if(W.spriteDistance(this.target, this) < AIBASE.FLEEDISTANCE
             && this.between(XBOUND.LEFT, XBOUND.RIGHT)
             && this.can('move'))
-            this.stats.moveSpeed = this.sprite.position.x > this.target.position.x ? this.stats.speed : -this.stats.speed;
+            this.stats.moveSpeed = this.sprite.position.x > this.target.sprite.position.x ? this.stats.speed : -this.stats.speed;
           
-          if(this.progress === self.villian.progress
+          if(this.progress === this.target.progress
             && !this.between(XBOUND.LEFT, XBOUND.RIGHT)
-            && W.distance(this.target, this.sprite) < AIBASE.TOOCLOSE
+            && W.distance(this.target.sprite, this.sprite) < AIBASE.TOOCLOSE
             && this.can('dodge')) {
             
             var direction = !(this.progress % 2) ? -1 : 1;
-            if(++this.progress >= 2 && self.villian.progress >= 2)
-              self.villian.progress = this.progress;
+            if(++this.progress >= 2 && this.target.progress >= 2)
+              this.target.progress = this.progress;
             this.dodge({x: 60*direction, y: -100});
           }
         }
@@ -200,8 +205,10 @@ var GameState = {
     });
     
     // note: the 'own' condition need the villian and krillin to be declared, so that it cannot be set until now
+    this.villian.target = this.krillin;
     this.dualInput.touch.down.condition = function() {
-      return self.krillin.progress == self.villian.progress && W.distance(self.villian.sprite, self.krillin.sprite) < FINISHERRANGE;
+      return self.krillin.progress == self.villian.progress 
+        && W.distance(self.villian.sprite, self.krillin.sprite) < FINISHERRANGE;
     };
     
     // update manager keeps the updates ordered and clean. currently the super warrior takes care of its own animation.. might change that.
@@ -238,9 +245,18 @@ var GameState = {
         
         if(self.dualInput.if('down')){
           
+          if(self.villian.isFinisherMode)
+            self.krillin.stats.hp-= (self.villian.stats.power*.05);
+          
           if(self.villian.can('attack')){
             
-            if(Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < FINISHERRANGE && self.villian.progress === self.krillin.progress) {
+            if(self.villian.can('diveBomb')){
+              
+              console.log("bug: then we are above krillin! crush him! (hidden finisher feature)");
+              self.villian.sprite.position.y = self.krillin.sprite.position.y;
+              self.villian.face(self.krillin);
+              
+            }else {
               // for now manually code this till i create a 'dragon homing' module
               console.log('Own Krillin!');
               self.villian.isFinisherMode = true;
@@ -258,13 +274,7 @@ var GameState = {
               self.villian.body.velocity.setTo(0);
               self.krillin.body.velocity.setTo(0);
             }
-          
-            // bug: then we are above krillin! crush him! (hidden finisher feature)
-            if(self.villian.sprite.y+5 < self.krillin.sprite.y && Math.abs(self.villian.sprite.x - self.krillin.sprite.x) < 15){console.log("Crush Krillin!!!");}
           }
-          
-          if(self.villian.isFinisherMode)
-            self.krillin.stats.hp-= (self.villian.stats.power*.05);
         }
         
         
@@ -277,23 +287,16 @@ var GameState = {
           self.krillin.sprite.frameName = 'lsw_krillin_pain2';
           self.krillin.body.velocity.x = 500 * (self.krillin.sprite.position.x > self.villian.sprite.position.x ? 1 : -1);
           self.krillin.body.velocity.y = -10;
-          // todo: add watcher on n seconds for krillin out of screen bounds and trigger the krillin owned count animation
           
-          // todo: delete on condition?
-          self.updateMan.add({
-            name: "checkIfKrillinIsGone",
-            update: function(){
-              if(!self.krillin.between(0, 575)){
-                if(self.villian.finisherStep === 1){
-                  console.log("level complete!");
-                  self.villian.finisherStep = 2;
-                  self.krillin.body.velocity.setTo(0);
-                  self.game.add.sprite(0, 0, 'owned_count').scale.setTo(.37);
-                  
-                }
-              }
+          self.updateMan.once(
+            function(){return !self.krillin.between(0, 575)},
+            function() {
+                console.log("level complete!");
+                self.krillin.body.velocity.setTo(0);
+                self.game.add.sprite(0, 0, 'owned_count').scale.setTo(.365);
             }
-          }, Phaser.Timer.SECOND * 1);
+          );
+
         }
       }
     });

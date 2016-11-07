@@ -1,4 +1,4 @@
-function UpdateManager(options){
+function UpdateManager(options) {
     var self = this;
     
     var context = options.context;
@@ -9,13 +9,27 @@ function UpdateManager(options){
     
     this.timedFrame = [];
     
-    this.add = function(obj, delay){
+    this.once = function(condition, func, delay) {
+      var randName = (new Date).getTime();
+      self.timedFrame.push({
+        name: randName,
+        type: 'once',
+        loop: context.time.events.loop(delay || Phaser.Timer.SECOND, function() {
+          if(condition()){
+            func();
+            self.remove(randName);
+          }
+        })
+      });
+    }
+    
+    this.add = function(obj, delay) {
         if(obj.update) {
           
           if(delay)
             self.timedFrame.push({
               name: obj.name,
-              type: 'todo',
+              type: 'timed',
               loop: context.time.events.loop(delay, obj.update.bind(obj))
             });
           else
@@ -25,6 +39,16 @@ function UpdateManager(options){
           console.warn("Tried to add a game object that does NOT honor IUpdateable! name of object: "+obj.name);
         }
     };
+    
+    this.remove = function(name){
+      for(var i=0; i<self.timedFrame.length;i++){
+        if(self.timedFrame[i].name === name){
+          context.time.events.remove(self.timedFrame[i].loop);
+          self.timedFrame.pop(i);
+          break;
+        }
+      }
+    }
     
     var sequence = 0;
     var updatesPerSecond = Math.round(60 / this.frequency);

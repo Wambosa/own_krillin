@@ -1,27 +1,29 @@
 {
+    "villian": "raditz",
+    
     "background": {
-        "spriteName" :"scene_earth_water",
+        "spriteName" : "scene_earth_water",
         "xOffset": -1,
         "yOffset": -5,
         "scale": {"x": 5, "y": 3}
     },
     
-    "platforms": [
-        {"x": 0, "y": 220},
-        {"x": 0, "y": 145},
-        {"x": 0, "y": 88},
-        {"x": 0, "y": 89}
-    ],
+    "music": "todo",
     
     "enemies": [
         {
-            "name": "tien",
-            "layer": 0,
+            "name": "piccolo",
+            "progress": 0,
+            "isSuprise": false,
             "difficulty": "easy"
         }
     ],
     
-    "krillinMoves": ["run", "block", "attack", "taiyoken", "kiBlast", "destructoDisk"],
-    
-    "villian": "vegeta"
+    "krillinMoves": [
+        "run",
+        "attack",
+        "taiyoken",
+        "kiBlast",
+        "destructoDisk"
+    ]
 }
