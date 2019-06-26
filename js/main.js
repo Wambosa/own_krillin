@@ -122,7 +122,7 @@ var GameState = {
     this.vs = this.game.add.sprite(285, 240, 'vs');
     this.vs.anchor.setTo(.5, 0);
     this.vs.scale.setTo(.4);
-    
+    //
     this.chibiR = this.game.add.sprite(244, 265, 'dbz', 'chibi_raditz');
     this.chibiK = this.game.add.sprite(324, 265, 'dbz', 'chibi_krillin');
     this.chibiK.scale.x = -1;
