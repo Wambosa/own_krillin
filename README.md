@@ -1,2 +1,3 @@
 # own_krillin
-fun tribute to DBZ Krillin (the human punching bag) whilst I learn phaserJS
+Fun tribute to DBZ Krillin _(the human punching bag)_.
+First level playable on https://shondiaz.com/assets/demo/own-krillin/index.html
